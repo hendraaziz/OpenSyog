@@ -1,0 +1,29 @@
+[package]
+name = "opensyog"
+version = "0.1.0"
+description = "Multi-OS MySQL/MariaDB/PostgreSQL client"
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+tauri-plugin-fs = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+mysql_async = { version = "0.35", default-features = false, features = ["minimal", "native-tls-tls"] }
+tokio = { version = "1", features = ["full"] }
+tokio-postgres = { version = "0.7" }
+native-tls = "0.2"
+postgres-native-tls = "0.5"
+keyring = { version = "3", features = ["windows-native", "apple-native", "linux-native"] }
+dirs = "5"
+russh = "0.46"
+russh-keys = "0.46"
+async-trait = "0.1"
+
+[profile.release]
+strip = true
+lto = true
