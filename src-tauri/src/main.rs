@@ -9,6 +9,7 @@ pub mod mysql_db;
 pub mod postgres_db;
 pub mod saved_conns;
 pub mod ssh_tunnel;
+pub mod sycs;
 pub mod transfer;
 
 use saved_conns::SavedConnection;
@@ -341,6 +342,78 @@ fn has_saved_password(id: String) -> bool {
     saved_conns::get_password(&id).is_some()
 }
 
+// ===================== import/export koneksi (.sycs SQLyog-compatible) =====================
+
+/// Baca file .sycs → daftar koneksi (password sudah di-decode, hanya utk preview).
+#[tauri::command]
+fn sycs_parse(path: String) -> Result<Vec<sycs::SycsEntry>, String> {
+    sycs::parse_sycs(&path)
+}
+
+/// Import koneksi terpilih dari .sycs ke daftar koneksi tersimpan (+ keyring).
+#[tauri::command]
+fn sycs_import(path: String, indexes: Vec<usize>) -> Result<usize, String> {
+    let entries = sycs::parse_sycs(&path)?;
+    let mut imported = 0;
+    for idx in indexes {
+        if let Some(e) = entries.get(idx) {
+            let mut conn = sycs::sycs_to_saved(e);
+            // hindari nama duplikat: tambahkan suffix bila sudah ada
+            let existing = saved_conns::list();
+            if existing.iter().any(|c| c.name == conn.name) {
+                conn.name = format!("{} (imported)", conn.name);
+            }
+            let pw = e.password.clone();
+            let ssh_pw = conn.ssh.as_ref().and_then(|s| s.password.clone());
+            saved_conns::save(&conn)?;
+            if !pw.is_empty() {
+                let _ = saved_conns::store_password(&conn.id, &pw);
+            }
+            // password SSH juga disimpan ke keyring dengan key terpisah
+            if let (Some(s), Some(spw)) = (conn.ssh, ssh_pw) {
+                if let Ok(entry) = keyring::Entry::new("OpenSyog", &format!("conn-{}-ssh", conn.id)) {
+                    let _ = entry.set_password(&spw);
+                }
+                // simpan kembali ssh tanpa password plaintext? SSH password di keyring terpisah
+                let mut s2 = s;
+                s2.password = None;
+                conn.ssh = Some(s2);
+                saved_conns::save(&conn)?;
+            }
+            imported += 1;
+        }
+    }
+    Ok(imported)
+}
+
+/// Export koneksi terpilih ke file .sycs (password diambil dari keyring).
+#[tauri::command]
+fn sycs_export(ids: Vec<String>, path: String) -> Result<usize, String> {
+    let all = saved_conns::list();
+    let mut conns = Vec::new();
+    let mut passwords = Vec::new();
+    for id in ids {
+        if let Some(c) = all.iter().find(|c| c.id == id) {
+            let mut c = c.clone();
+            let pw = saved_conns::get_password(&c.id).unwrap_or_default();
+            // ambil password SSH dari keyring terpisah bila ada
+            if let Some(s) = c.ssh.as_mut() {
+                if s.password.is_none() {
+                    if let Ok(entry) = keyring::Entry::new("OpenSyog", &format!("conn-{}-ssh", c.id)) {
+                        if let Ok(p) = entry.get_password() {
+                            s.password = Some(p);
+                        }
+                    }
+                }
+            }
+            conns.push(c);
+            passwords.push(pw);
+        }
+    }
+    sycs::export_sycs(&conns, &passwords, &path)?;
+    Ok(conns.len())
+}
+
 // ===================== dump / import =====================
 
 #[tauri::command]
@@ -405,6 +478,9 @@ pub fn run() {
             delete_connection,
             store_connection_password,
             has_saved_password,
+            sycs_parse,
+            sycs_import,
+            sycs_export,
             dump_table,
             import_csv,
         ])

@@ -8,6 +8,7 @@ import MenuBar from "./components/MenuBar";
 import Toolbar from "./components/Toolbar";
 import TableInfo from "./components/TableInfo";
 import UserManagement from "./components/UserManagement";
+import ConnTransfer from "./components/ConnTransfer";
 
 export default function App() {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -17,6 +18,7 @@ export default function App() {
   // tinggi editor query (px) — bisa ditarik via splitter
   const [editorH, setEditorH] = useState<number | null>(null);
   const centerRef = useRef<HTMLDivElement>(null);
+  const [transferMode, setTransferMode] = useState<"import" | "export" | null>(null);
   const {
     connections,
     activeConnId,
@@ -37,9 +39,15 @@ export default function App() {
     window.addEventListener("opensyog:new-connection", open);
     const um = () => setUserMgmt(true);
     window.addEventListener("opensyog:user-management", um);
+    const imp = () => setTransferMode("import");
+    const exp = () => setTransferMode("export");
+    window.addEventListener("opensyog:import-connections", imp);
+    window.addEventListener("opensyog:export-connections", exp);
     return () => {
       window.removeEventListener("opensyog:new-connection", open);
       window.removeEventListener("opensyog:user-management", um);
+      window.removeEventListener("opensyog:import-connections", imp);
+      window.removeEventListener("opensyog:export-connections", exp);
     };
   }, []);
 
@@ -269,6 +277,7 @@ export default function App() {
         />
       )}
       {userMgmt && <UserManagement onClose={() => setUserMgmt(false)} />}
+      {transferMode && <ConnTransfer mode={transferMode} onClose={() => setTransferMode(null)} />}
     </div>
   );
 }

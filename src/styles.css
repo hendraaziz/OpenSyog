@@ -519,6 +519,15 @@ tr.selected td { background: #e3f0ff !important; }
 .info-cols td { border: 1px solid #eee; padding: 3px 10px; font-size: 12px; }
 .info-cols td.info-comment { color: #777; font-style: italic; max-width: 320px; }
 
+/* ===== Import/Export koneksi ===== */
+.conn-transfer { min-width: 620px; max-width: 760px; }
+.ct-list { max-height: 320px; overflow-y: auto; border: 1px solid #e0e0e0; border-radius: 4px; margin: 8px 0; }
+.ct-item { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-bottom: 1px solid #f2f2f2; cursor: pointer; font-size: 12px; }
+.ct-item:hover { background: #f5f8fb; }
+.ct-name { font-weight: 600; min-width: 160px; }
+.ct-head { margin-top: 6px; }
+.ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 400px; }
+
 /* ===== Table Designer ===== */
 .td-modal { max-width: 900px; }
 /* versi tab (bukan modal) — mengisi area editor */

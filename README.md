@@ -15,6 +15,8 @@ Database client desktop lintas platform (Windows / macOS / Linux) untuk **MySQL,
 - **Test Koneksi** sebelum simpan — connect sementara, tampilkan versi server, lalu tutup
 - **SSH tunnel** — koneksi ke database di belakang firewall via SSH, mendukung autentikasi **password** maupun **private key**
 - **SSL/TLS** untuk koneksi langsung
+- **Import koneksi dari SQLyog (.sycs)** — baca file koneksi SQLyog, pilih mana yang diimport via checklist; password MySQL & SSH otomatis di-decode lalu disimpan aman ke OS keyring
+- **Export koneksi ke .sycs** — simpan koneksi terpilih ke file yang kompatibel dengan SQLyog (bisa dibuka balik di SQLyog maupun OpenSyog)
 
 ### SQL Editor
 - **Multi tab query** — buka tab query sebanyak apapun per koneksi (`+` / Ctrl+T)
@@ -94,6 +96,8 @@ Hasil build release:
 4. **Klik tabel** → data tampil di grid bawah, siap diedit (double-click cell)
 5. **Query SQL**: ketik di editor atas, tekan **F9** — hasil di panel bawah
 6. **Klik kanan** di database/tabel untuk menu lengkap (create, alter, rename, dump, dll)
+7. **Import koneksi dari SQLyog**: menu **Tools → Import Koneksi (SQLyog .sycs)…** → pilih file `.sycs` → checklist koneksi yang mau diimport → **Import**. Password (MySQL & SSH) otomatis didekode dari file SQLyog dan langsung disimpan ke OS keyring — koneksi siap dipakai tanpa mengetik ulang password
+8. **Export koneksi**: menu **Tools → Export Koneksi (.sycs)…** → checklist koneksi → **Export** → file hasil bisa dibuka di SQLyog maupun OpenSyog
 
 ### Shortcut
 | Tombol | Aksi |
@@ -218,8 +222,10 @@ Karena aplikasi belum di-sign dengan Apple Developer certificate, macOS akan men
 
 ## Roadmap
 
-- [ ] Table designer visual (grid kolom, index, FK drag-drop)
-- [ ] User manager & privileges
+- [x] Table designer visual (grid kolom + comment) — sudah: tab Manage Table
+- [x] User manager & privileges — sudah
+- [x] Import/export koneksi (kompatibel .sycs) — sudah
+- [x] Schema designer visual antar tabel (ERD) — sudah
 - [ ] Backup/restore seluruh database (bukan per tabel)
 - [ ] Schema sync antar database
 - [ ] Saved query / snippet

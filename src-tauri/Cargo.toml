@@ -20,6 +20,8 @@ native-tls = "0.2"
 postgres-native-tls = "0.5"
 keyring = { version = "3", features = ["windows-native", "apple-native", "linux-native"] }
 dirs = "5"
+base64 = "0.22"
+uuid = { version = "1", features = ["v4"] }
 russh = "0.46"
 russh-keys = "0.46"
 async-trait = "0.1"

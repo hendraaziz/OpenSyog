@@ -54,6 +54,7 @@ Setiap koneksi berjalan pada worker async sendiri; semua query bisa dibatalkan (
 7. Import/export: CSV, SQL dump, JSON, XML; export SQL terstruktur.
 8. User manager & privileges (GRANT/REVOKE UI).
 9. Multi-koneksi paralel, multi-tab.
+10. Import/export koneksi: kompatibel file `.sycs` SQLyog (password MySQL & SSH di-decode dari format obfuscation base64+rotl1, lalu disimpan aman ke OS keyring).
 
 ## Fitur Fasa 2
 

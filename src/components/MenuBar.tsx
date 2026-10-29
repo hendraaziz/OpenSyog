@@ -145,6 +145,15 @@ export default function MenuBar() {
           disabled: !activeConn,
           onClick: () => window.dispatchEvent(new CustomEvent("opensyog:user-management")),
         },
+        { sep: true, label: "" },
+        {
+          label: "Import Koneksi (SQLyog .sycs)…",
+          onClick: () => window.dispatchEvent(new CustomEvent("opensyog:import-connections")),
+        },
+        {
+          label: "Export Koneksi (.sycs)…",
+          onClick: () => window.dispatchEvent(new CustomEvent("opensyog:export-connections")),
+        },
       ],
     },
     {
