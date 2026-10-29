@@ -19,6 +19,8 @@ export default function App() {
   const [editorH, setEditorH] = useState<number | null>(null);
   const centerRef = useRef<HTMLDivElement>(null);
   const [transferMode, setTransferMode] = useState<"import" | "export" | null>(null);
+  // modal pemilih koneksi saat app sudah terkoneksi (mirip welcome screen)
+  const [connectModal, setConnectModal] = useState(false);
   const {
     connections,
     activeConnId,
@@ -35,7 +37,12 @@ export default function App() {
 
   useEffect(() => {
     loadSaved();
-    const open = () => setDialogOpen(true);
+    // saat sudah terkoneksi: "New Connection" buka modal connect (saved list + form baru);
+    // saat belum: langsung form (welcome screen sudah menampilkan saved list)
+    const open = () => {
+      if (useStore.getState().connections.length > 0) setConnectModal(true);
+      else setDialogOpen(true);
+    };
     window.addEventListener("opensyog:new-connection", open);
     const um = () => setUserMgmt(true);
     window.addEventListener("opensyog:user-management", um);
@@ -270,6 +277,60 @@ export default function App() {
       )}
 
       {dialogOpen && <ConnectionDialog onClose={() => setDialogOpen(false)} />}
+      {connectModal && (
+        <div className="modal-backdrop" onClick={() => setConnectModal(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <h2>Connect to Database</h2>
+            {savedList.length === 0 ? (
+              <p className="muted">Belum ada koneksi tersimpan.</p>
+            ) : (
+              <div className="saved-list" style={{ marginTop: 8, minWidth: 420 }}>
+                {savedList.map((sc) => (
+                  <div
+                    key={sc.id}
+                    className="saved-item"
+                    onClick={async () => {
+                      setConnectModal(false);
+                      await doConnectSaved(sc.id);
+                    }}
+                  >
+                    {sc.db_type === "mysql" ? "🐬" : "🐘"} {sc.name}
+                    {sc.ssh && <span className="tag">SSH</span>}
+                    <span className="muted">
+                      {sc.host}:{sc.port}
+                    </span>
+                    <span className="saved-actions">
+                      <button
+                        className="mini"
+                        title="Edit koneksi"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setConnectModal(false);
+                          setEditConn(sc);
+                        }}
+                      >
+                        Edit
+                      </button>
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="modal-actions">
+              <button onClick={() => setConnectModal(false)}>Cancel</button>
+              <button
+                className="primary"
+                onClick={() => {
+                  setConnectModal(false);
+                  setDialogOpen(true);
+                }}
+              >
+                + New Connection
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {editConn && (
         <ConnectionDialog
           edit={editConn}

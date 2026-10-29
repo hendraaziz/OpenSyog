@@ -26,6 +26,9 @@ pub struct ConnParams {
     pub database: Option<String>,
     #[serde(default)]
     pub ssl: bool,
+    /// SSH tunnel opsional untuk koneksi ad-hoc (dialog langsung).
+    #[serde(default)]
+    pub ssh: Option<crate::saved_conns::SshParams>,
 }
 
 pub enum Conn {
@@ -191,6 +194,7 @@ async fn connect_saved(
         password: saved_conns::get_password(&saved_id).unwrap_or_default(),
         database: saved.database.clone(),
         ssl: saved.ssl,
+        ssh: None,
     };
 
     let tunnel = if let Some(ssh) = &saved.ssh {
@@ -219,16 +223,31 @@ async fn create_conn(params: &ConnParams) -> Result<Conn, String> {
     }
 }
 
+/// Buka SSH tunnel bila params.ssh ada; host/port dialihkan ke tunnel lokal.
 async fn open_ssh_if_any(params: &mut ConnParams) -> Result<Option<SshTunnel>, String> {
-    Ok(None) // ad-hoc tanpa SSH untuk sekarang; SSH ad-hoc via connect_saved
+    let Some(ssh) = params.ssh.take() else {
+        return Ok(None);
+    };
+    let t = ssh_tunnel::open_tunnel(&ssh, &params.host, params.port).await?;
+    params.host = "127.0.0.1".into();
+    params.port = t.local_port;
+    Ok(Some(t))
 }
 
-/// Test koneksi tanpa menyimpan: connect → ambil versi server → drop.
+/// Test koneksi tanpa menyimpan: (SSH tunnel bila ada) → connect → versi server.
+/// Notifikasi sukses membedakan tahap SSH dan DB.
 #[tauri::command]
 async fn test_connection(params: ConnParams) -> Result<String, String> {
+    let mut params = params;
+    let ssh_used = params.ssh.is_some();
+    let _tunnel = open_ssh_if_any(&mut params).await?;
     let mut conn = create_conn(&params).await?;
     let version = conn.server_version().await?;
-    Ok(version)
+    Ok(if ssh_used {
+        format!("SSH tunnel OK → {version}")
+    } else {
+        format!("Connected — {version}")
+    })
 }
 
 #[tauri::command]

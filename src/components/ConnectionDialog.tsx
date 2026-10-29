@@ -89,6 +89,7 @@ export default function ConnectionDialog({
           password: form.password,
           database: form.database || null,
           ssl: form.ssl,
+          ssh: form.use_ssh ? sshFromForm() : null,
         },
         form.name || `${form.host}:${form.port}`
       );
@@ -147,6 +148,15 @@ export default function ConnectionDialog({
     if (file) setSsh("private_key_path", file as string);
   };
 
+  // SSH params untuk test/connect ad-hoc (bukan tersimpan)
+  const sshFromForm = () => ({
+    host: form.ssh.host,
+    port: form.ssh.port,
+    user: form.ssh.user,
+    password: form.ssh.password || null,
+    private_key_path: form.ssh.private_key_path || null,
+  });
+
   const testConn = async () => {
     setBusy(true);
     setError(null);
@@ -161,9 +171,10 @@ export default function ConnectionDialog({
           password: form.password,
           database: form.database || null,
           ssl: form.ssl,
+          ssh: form.use_ssh ? sshFromForm() : null,
         },
       });
-      setTestOk(`✔ Koneksi berhasil — server: ${version}`);
+      setTestOk(`✔ ${version}`);
     } catch (e: any) {
       setTestOk(null);
       setError(`Test koneksi gagal: ${e}`);
