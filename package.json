@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "update-releases": "node scripts/update-releases.mjs"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.9.0",
