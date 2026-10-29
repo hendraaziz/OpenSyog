@@ -37,8 +37,45 @@ impl SshTunnel {
 }
 
 async fn connect_ssh(params: &SshParams) -> Result<Handle<ClientHandler>, String> {
+    // Sertakan algoritma legacy agar kompatibel dengan server SSH lama
+    // (KEX SHA1, hostkey ssh-rsa, cipher CBC) — modern tetap diprioritaskan.
     let config = Arc::new(client::Config {
         inactivity_timeout: Some(Duration::from_secs(3600)),
+        preferred: russh::Preferred {
+            kex: std::borrow::Cow::from(&[
+                russh::kex::EXTENSION_SUPPORT_AS_CLIENT,
+                russh::kex::CURVE25519,
+                russh::kex::CURVE25519_PRE_RFC_8731,
+                russh::kex::ECDH_SHA2_NISTP256,
+                russh::kex::ECDH_SHA2_NISTP384,
+                russh::kex::ECDH_SHA2_NISTP521,
+                russh::kex::DH_G16_SHA512,
+                russh::kex::DH_G14_SHA256,
+                russh::kex::DH_G14_SHA1,
+                russh::kex::DH_G1_SHA1,
+            ][..]),
+            key: std::borrow::Cow::from(&[
+                russh::keys::key::RSA_SHA2_256,
+                russh::keys::key::RSA_SHA2_512,
+                russh::keys::key::ED25519,
+                russh::keys::key::ECDSA_SHA2_NISTP256,
+                russh::keys::key::ECDSA_SHA2_NISTP384,
+                russh::keys::key::ECDSA_SHA2_NISTP521,
+                russh::keys::key::SSH_RSA,
+            ][..]),
+            cipher: std::borrow::Cow::from(&[
+                russh::cipher::CHACHA20_POLY1305,
+                russh::cipher::AES_256_GCM,
+                russh::cipher::AES_256_CTR,
+                russh::cipher::AES_192_CTR,
+                russh::cipher::AES_128_CTR,
+                russh::cipher::AES_256_CBC,
+                russh::cipher::AES_192_CBC,
+                russh::cipher::AES_128_CBC,
+                russh::cipher::TRIPLE_DES_CBC,
+            ][..]),
+            ..Default::default()
+        },
         ..Default::default()
     });
 
