@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
 import { useStore, SavedConnection, SshConfig } from "../store";
@@ -53,6 +53,24 @@ export default function ConnectionDialog({
   const [error, setError] = useState<string | null>(null);
   const [testOk, setTestOk] = useState<string | null>(null);
   const [mode, setMode] = useState<"connect" | "save">("connect");
+
+  // mode edit: prefill password (MySQL & SSH) dari keyring agar tidak perlu ketik ulang
+  useEffect(() => {
+    if (!edit) return;
+    (async () => {
+      try {
+        const pw = await invoke<string | null>("get_saved_password", { id: edit.id });
+        if (pw) set("password", pw);
+        if (edit.ssh) {
+          const spw = await invoke<string | null>("get_saved_ssh_password", { id: edit.id });
+          if (spw) setSsh("password", spw);
+        }
+      } catch {
+        // keyring tidak tersedia / tidak ada password — biarkan kosong
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [edit?.id]);
 
   const set = (k: string, v: any) => setForm((f) => ({ ...f, [k]: v }));
   const setSsh = (k: string, v: any) =>
@@ -111,6 +129,10 @@ export default function ConnectionDialog({
         // saat edit dengan password kosong: jangan overwrite password lama di keyring
         form.save_password && form.password !== "" ? form.password : undefined
       );
+      // password SSH disimpan ke keyring terpisah (kompatibel dgn hasil import)
+      if (form.use_ssh && form.ssh.password) {
+        await invoke("store_ssh_password", { id: saved.id, password: form.ssh.password }).catch(() => {});
+      }
       await useStore.getState().connectSaved(saved.id);
       onClose();
     } catch (e: any) {

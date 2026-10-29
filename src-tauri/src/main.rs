@@ -342,6 +342,29 @@ fn has_saved_password(id: String) -> bool {
     saved_conns::get_password(&id).is_some()
 }
 
+/// Ambil password tersimpan dari keyring (untuk prefill form edit).
+#[tauri::command]
+fn get_saved_password(id: String) -> Option<String> {
+    saved_conns::get_password(&id)
+}
+
+/// Ambil password SSH tersimpan dari keyring terpisah.
+#[tauri::command]
+fn get_saved_ssh_password(id: String) -> Option<String> {
+    keyring::Entry::new("OpenSyog", &format!("conn-{id}-ssh"))
+        .ok()
+        .and_then(|e| e.get_password().ok())
+}
+
+/// Simpan password SSH ke keyring terpisah.
+#[tauri::command]
+fn store_ssh_password(id: String, password: String) -> Result<(), String> {
+    keyring::Entry::new("OpenSyog", &format!("conn-{id}-ssh"))
+        .map_err(|e| e.to_string())?
+        .set_password(&password)
+        .map_err(|e| e.to_string())
+}
+
 // ===================== import/export koneksi (.sycs SQLyog-compatible) =====================
 
 /// Baca file .sycs → daftar koneksi (password sudah di-decode, hanya utk preview).
@@ -478,6 +501,9 @@ pub fn run() {
             delete_connection,
             store_connection_password,
             has_saved_password,
+            get_saved_password,
+            get_saved_ssh_password,
+            store_ssh_password,
             sycs_parse,
             sycs_import,
             sycs_export,
